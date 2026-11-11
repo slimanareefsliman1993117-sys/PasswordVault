@@ -1,0 +1,7 @@
+{
+  "name": "password-vault-ui-validation",
+  "private": true,
+  "type": "module",
+  "scripts": {"test": "node --test test_ui.mjs"},
+  "devDependencies": {"jsdom": "27.4.0"}
+}

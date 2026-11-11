@@ -1,0 +1,93 @@
+PASSWORD VAULT -- PYTHONANYWHERE DEPLOYMENT
+
+This package contains application source and static assets. It deliberately
+excludes local .env secrets, the SQLite database, virtualenv, test dependencies,
+source exports, and historical documents. It creates a new empty installation.
+Do not upload the entire original parent folder or old text exports.
+
+1. ACCOUNT AND UPLOAD
+Log in to the intended PythonAnywhere account. Inspect its Web tab before making
+changes: do not replace another existing website to make room for this app.
+Upload password-vault-pythonanywhere.zip on the Files page. It is below the
+provider's documented 100 MiB browser upload limit.
+
+2. EXTRACT AND INSTALL
+In a Bash console in your home folder, first check that password-vault does not
+already exist. If it does, stop and inspect it; do not overwrite another copy.
+For a new installation:
+
+  umask 077
+  unzip password-vault-pythonanywhere.zip
+  cd password-vault
+  python3.11 -m venv .venv
+  .venv/bin/python -m pip install --no-cache-dir -r requirements.txt
+
+Select an available Python version supported by the account's system image;
+Python 3.11 is the locally tested version. The Web app and virtualenv must use
+the same version. PythonAnywhere hosts WSGI itself; do not run Gunicorn or the
+Django development server there.
+
+3. PRIVATE CONFIGURATION
+Use the EXACT domain displayed by PythonAnywhere (US/EU/custom as applicable):
+
+  .venv/bin/python deploy/configure_pythonanywhere.py --domain YOUR-EXACT-DOMAIN
+
+The command creates .env with DEBUG=False, the host/origin, and new persistent
+keys on the server. It refuses to overwrite an existing .env. It prints no keys.
+Configure SMTP credentials privately in .env. Default SMTP is Gmail on port 587
+with TLS; use the account/provider's supported mail service and app credentials.
+
+For a temporary test installation only, add --console-email to the configure
+command. Mail then goes to server output; normal users will not receive
+verification/reset messages. Do not describe console email as live delivery.
+
+The local database is empty and is not being migrated to the server. If moving
+real accounts later, their database and matching encryption keys must be moved
+together through a separately reviewed operation. Never run the new-install
+key generator over existing user data.
+
+4. CHECK AND BUILD
+
+  .venv/bin/python manage.py migrate --noinput
+  .venv/bin/python manage.py collectstatic --noinput
+  .venv/bin/python manage.py check --deploy --fail-level WARNING
+
+5. CONFIGURE THE WEB APP
+In the Web tab, choose Add a new web app -> Manual configuration, then the same
+Python version as the virtualenv. Set:
+
+  Source code:       /home/YOUR-USERNAME/password-vault
+  Working directory: /home/YOUR-USERNAME/password-vault
+  Virtualenv:        /home/YOUR-USERNAME/password-vault/.venv
+
+Open the WSGI file LINKED BY THE WEB TAB (under /var/www). Copy the contents of
+password-vault/deploy/wsgi.generated.py into it. The generated file already has
+the correct absolute source path and loads the private environment.
+
+WhiteNoise serves collected static assets, so a separate /static/ mapping is
+optional. If using the provider's static mapping, point /static/ only to the
+project's staticfiles directory, never to the project root or a home directory.
+
+Enable Force HTTPS in the Web tab and reload the web app. HTTPS is provided for
+PythonAnywhere's own app domains. Do not weaken cookie/HTTPS settings to hide a
+configuration problem. The WSGI environment must preserve the original HTTPS
+scheme; verify this on the live site before changing proxy-header trust.
+
+6. VERIFY LIVE BEHAVIOR
+Check HTTPS login/registration, HTTP-to-HTTPS redirect, and CSS/JS responses.
+With mail configured, verify a user registration, sign in, save/reveal/edit a
+synthetic password, enroll an authenticator, save recovery codes, sign out,
+and confirm that login requires OTP. Use synthetic credentials for smoke tests.
+No real SMTP messages should be sent by the deployment assistant without a
+specific instruction to send that test message.
+
+This app uses atomic database rate limits. PythonAnywhere is a reverse proxy;
+confirm its client-IP behavior before choosing a forwarded header for limits.
+Do not trust arbitrary X-Forwarded-For values. Production capacity and account
+storage depend on the account plan; inspect the actual account, not assumptions.
+
+Official provider guides:
+https://help.pythonanywhere.com/pages/DeployExistingDjangoProject/
+https://help.pythonanywhere.com/pages/UploadingAndDownloadingFiles/
+https://help.pythonanywhere.com/pages/EnvironmentVariables/
+https://help.pythonanywhere.com/pages/ForcingHTTPS/

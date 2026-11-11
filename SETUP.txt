@@ -1,0 +1,120 @@
+PASSWORD VAULT -- LOCAL SETUP AND OPERATIONS
+
+The application has been repaired and validated on Python 3.11.14 and Django
+5.2.19. The pinned runtime dependencies are in requirements.txt. Direct version
+constraints are in requirements.in. Node is needed only for JavaScript tests.
+
+START THE EXISTING WORKSPACE
+From this directory:
+
+  .venv/bin/python manage.py runserver 127.0.0.1:8010
+
+Open http://127.0.0.1:8010/accounts/register/ to create your own account.
+No default account, administrator password, or demo credentials were installed.
+Port 8000 was occupied during repair, so the local server uses 8010.
+
+With DEBUG=True, email defaults to the console backend. Registration verification
+and reset links appear in the server terminal. Open the verification link before
+signing in. This permits local use without sending external email.
+
+FOR A NEW INSTALLATION
+Use Python 3.11 or a compatible maintained Python version:
+
+  python3.11 -m venv .venv
+  .venv/bin/python -m pip install -r requirements.txt
+  .venv/bin/python scripts/setup_local.py
+  .venv/bin/python manage.py migrate --noinput
+  .venv/bin/python manage.py runserver 127.0.0.1:8010
+
+setup_local.py generates persistent secrets only when .env is absent. It never
+replaces an existing .env or existing encryption keys. .env.example documents the
+configuration; its placeholders are not usable keys.
+
+BACKUPS AND UPGRADES
+Back up db.sqlite3 and .env together, privately. Vault and recovery encryption
+keys must remain stable across restarts. Changing them loses access to existing
+encrypted data unless a separate re-encryption operation is performed.
+
+On an existing installation, back up before running migrate. The vault migration
+first decrypts each legacy row with its old stored key and re-encrypts it with
+the persistent ENCRYPTION_KEY. It then removes the database key column. The
+migration is transactional and intentionally irreversible; restore a matching
+backup for rollback. A dedicated legacy-data migration test passed with a key
+that differed from the new application key.
+
+The email-verification field was renamed from is_verified to email_verified so
+it no longer conflicts with django-otp's is_verified() method. Email addresses
+are now case-insensitively unique. If an imported database contains addresses
+that differ only in case, migration stops with a clear error so those accounts
+can be resolved before proceeding; it does not merge or delete them.
+
+TWO-FACTOR AUTHENTICATION
+Use Settings -> Set up authenticator, scan the QR code or enter the manual key,
+and confirm a code. Canceling enrollment leaves password login available.
+Enrollment creates ten recovery codes and shows them once. Save them privately.
+Each code can be used once. Generating replacement codes invalidates old codes.
+Disabling 2FA, regenerating codes, and deleting an account require the current
+password. Both login URLs use the same authentication view and device policy.
+
+LIVE EMAIL DELIVERY
+Mailjet HTTPS delivery is supported through django-anymail:
+
+  EMAIL_BACKEND=anymail.backends.mailjet.EmailBackend
+  MAILJET_API_KEY=your-mailjet-api-key
+  MAILJET_SECRET_KEY=your-mailjet-secret-key
+  DEFAULT_FROM_EMAIL=your-verified-sender@example.com
+
+Keep keys in the private .env, never in source or logs. Mailjet must activate
+sending for the account before it allows API credentials or delivery. Click and
+open tracking are disabled for verification/reset links. An accepted API request
+does not establish delivery; inspect provider delivery events for a real test.
+
+SMTP remains available by selecting django.core.mail.backends.smtp.EmailBackend
+and configuring EMAIL_HOST, EMAIL_PORT, EMAIL_USE_TLS, EMAIL_HOST_USER,
+EMAIL_HOST_PASSWORD, and DEFAULT_FROM_EMAIL. Restart workers after changes.
+The local test suite mocks provider HTTP requests and sends no external email.
+
+PRODUCTION
+Set DEBUG=False, ALLOWED_HOSTS to actual hostname(s), CSRF_TRUSTED_ORIGINS to
+actual https:// origins, and configure email delivery. Use a trusted HTTPS reverse proxy.
+Enable TRUST_PROXY_HEADERS=True only when that proxy strips and sets the
+forwarding headers itself; never trust arbitrary client forwarding headers.
+
+  .venv/bin/python manage.py migrate --noinput
+  DEBUG=False .venv/bin/python manage.py collectstatic --noinput
+  DEBUG=False .venv/bin/python manage.py check --deploy --fail-level WARNING
+  DEBUG=False .venv/bin/gunicorn password_manager.wsgi:application --bind 127.0.0.1:8010
+
+WhiteNoise serves the collected, fingerprinted static files. collectstatic is a
+build step: finish it before starting application workers or tests. Do not
+modify the static output while workers or tests are reading it. Production
+settings enable HTTPS redirects, secure cookies, and HSTS. The development
+server is intended only for local use.
+
+Rate limits use atomic database updates and are shared by workers using that
+same database. SQLite suits this local installation. For larger deployments,
+plan a PostgreSQL configuration and operational backups for that environment.
+
+VALIDATION
+Install optional development tools:
+
+  .venv/bin/python -m pip install -r requirements-dev.txt
+  npm ci --prefix validation
+
+Run checks in this order:
+
+  .venv/bin/python manage.py check --fail-level WARNING
+  .venv/bin/python manage.py makemigrations --check --dry-run
+  .venv/bin/python validation/run.py test validation accounts vault api --verbosity 2
+  .venv/bin/python validation/check_legacy_migration.py
+  npm test --prefix validation
+  .venv/bin/pip-audit -r requirements.txt
+
+The isolated validation runner uses synthetic secrets, an in-memory database,
+and an in-memory email backend. The standard manage.py test command also passes;
+Django creates a separate test database and uses its test email backend.
+
+See validation/REPORT.txt for the dated repair review and README.md for the
+GitHub source-snapshot check. Detailed logs in validation/results/ and the
+historical baseline remain local and are excluded from Git. The UI suite tests
+DOM behavior; a deployed site also needs browser and live-server acceptance checks.

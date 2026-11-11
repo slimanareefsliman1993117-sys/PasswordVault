@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% block title %}Privacy policy{% endblock %}
+{% block content %}
+<article class="card shadow-sm mx-auto" style="max-width: 850px;">
+  <div class="card-body p-4 p-md-5">
+    <h1>Privacy policy</h1>
+    <p class="text-muted">Last updated: 11 November 2026</p>
+    <p>This page describes how this Password Vault website processes information when you create an account, sign in, and store passwords.</p>
+    <h2 class="h4 mt-4">Information stored by the service</h2>
+    <p>Your account stores your email address, first and last names, a hash of your account password, and account security settings. Your vault stores website labels, usernames, categories, and encrypted passwords. Website labels, usernames, categories, and account details are not encrypted by the vault password encryption.</p>
+    <p>If you enable two-factor authentication, the service also stores your authenticator configuration and recovery-code records. Sessions and request limits help protect accounts. The hosting service may record request metadata such as IP addresses, requested URLs, browser information, and timestamps in access and error logs.</p>
+    <h2 class="h4 mt-4">How information is used</h2>
+    <p>The service uses this information to operate your account and vault, verify your email, process password resets, and protect against unauthorized access. Verification and password reset messages are triggered by account actions. The application does not send marketing campaigns or load third-party advertising or analytics scripts.</p>
+    <h2 class="h4 mt-4">Email delivery and hosting</h2>
+    <p>The website is hosted on PythonAnywhere. Mailjet is the selected provider for transactional email. When email delivery is enabled, the provider receives the recipient address, message content (including verification or reset links), and delivery metadata. Vault entries and stored vault passwords are not included in these messages. These providers process information under their own policies.</p>
+    <p><a href="https://www.pythonanywhere.com/privacy_v2/" rel="noopener noreferrer">PythonAnywhere privacy policy</a> · <a href="https://www.mailjet.com/legal/privacy-policy/" rel="noopener noreferrer">Mailjet privacy policy</a></p>
+    <h2 class="h4 mt-4">Security and cookies</h2>
+    <p>The service uses HTTPS, password hashing, and encryption for stored vault passwords. Vault encryption keys are held on the server; this service is not a zero-knowledge password manager. An operator with access to the server and keys can decrypt vault passwords. Session cookies keep you signed in, and CSRF cookies help protect forms.</p>
+    <h2 class="h4 mt-4">Keeping and deleting information</h2>
+    <p>Account and vault records are kept while your account exists. You can update account details and delete vault entries in the application. The Delete Account option in Settings removes your account and associated database records. Hosting logs, backups if made, and email-provider records may persist separately according to their retention practices; deleting an account does not guarantee their immediate removal.</p>
+    <h2 class="h4 mt-4">Contact</h2>
+    <p>For questions about this website or your information, contact the site operator at <a href="mailto:slimanareefsliman1993117@gmail.com">slimanareefsliman1993117@gmail.com</a>. Do not include account passwords, vault secrets, or recovery codes in email.</p>
+  </div>
+</article>
+{% endblock %}

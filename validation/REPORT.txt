@@ -1,0 +1,121 @@
+PASSWORD VAULT -- REPAIR AND FINAL VALIDATION
+Date: 2026-11-10 (Asia/Damascus)
+Result: PASS for the implemented account and vault flows and checks listed below.
+
+The initial findings are fixed. This report replaces the initial failed report,
+which is preserved as REPORT.baseline.txt and results/baseline/.
+
+FINAL RESULTS
+- 48 Django regression tests passed using the standard manage.py test command.
+- 6 JavaScript DOM integration tests passed against actual rendered templates.
+- Legacy migration proof passed: encrypted passwords were preserved when the
+  legacy stored key differed from the new external key, and the key column was
+  removed. Email verification state was preserved by the field rename.
+- Django system check: no errors or warnings.
+- Missing migrations check: no changes detected.
+- Production-mode check --deploy --fail-level WARNING: no errors or warnings.
+- Production-mode static collection succeeded. HTTPS-mode request checks returned
+  200 for the login page and fingerprinted CSS/JavaScript served by WhiteNoise.
+- Live local HTTP requests returned 200 for account pages and static assets.
+- pip-audit: 18 runtime dependencies checked, zero known vulnerabilities reported.
+- npm install audit: zero known vulnerabilities reported for UI-test dependencies.
+
+REPAIRS
+Authentication and accounts:
+- Renamed the email verification field to email_verified, avoiding the conflict
+  with django-otp's is_verified() session-verification method.
+- Both login URLs now use the same custom login view. Authentication requires an
+  active account and verified email. Confirmed OTP devices determine whether a
+  code is required, even if the old compatibility flag is stale.
+- Authenticator setup uses a single view and valid templates. It marks the flag
+  enabled only after device confirmation and synchronizes device changes.
+- QR code output is exercised by the enrollment regression test.
+- Successful OTP verification records the device through django-otp's login API.
+- Pending OTP challenges expire after five minutes, have an attempt limit, and
+  are invalidated when the account password changes.
+- Existing authenticated sessions cannot skip a newly enrolled authenticator.
+- IP request limits use atomic database updates shared by application workers.
+  Login, OTP, recovery, registration, resend, settings, and reset email requests
+  are rate limited.
+- Verification links use their own purpose-specific token generator, become
+  invalid after verification, and cannot be used as password-reset tokens.
+- Email addresses are normalized and uniquely constrained without regard to
+  case. Login accepts email capitalization differences.
+- Registration rolls back and shows a useful error if mail delivery fails.
+- Password reset is tested through completion and token reuse rejection; invalid
+  links now display a clear error rather than an empty unusable form.
+- Disabling 2FA, replacing recovery codes, and account deletion require the
+  current password. Logout is a CSRF-protected POST action.
+- Recovery code consumption is atomic and single-use. Only active, verified
+  accounts can recover. New codes display once, and replacement invalidates old
+  codes. Missing or invalid recovery encryption keys fail explicitly.
+- Secret-bearing logging/printing and SQLite debugging queries were removed.
+
+Vault and interface:
+- Encryption keys are no longer stored in password rows. Runtime encryption uses
+  the persistent key supplied by configuration. Legacy rows are re-encrypted in
+  a transactional migration before the key column is removed.
+- Dashboard passwords are absent from the initial HTML and fetched only on an
+  authorized, CSRF-protected POST for Show/Copy.
+- Password strings enter DOM input values, never innerHTML. HTML, quotes, and
+  ampersands remain literal text. Password values are not logged in the console.
+- Revealed passwords clear when hidden, after 30 seconds, or when the tab hides.
+- Show/hide, copy, search, category filtering, generation, strength feedback,
+  delete confirmation/cancellation, and error handling have DOM coverage.
+- Deletes reload the dashboard after success so categories, counts, and entries
+  remain consistent. Category deletion explicitly warns that it deletes entries.
+- Ownership checks and CSRF protection remain in place and are tested.
+- Bound forms display validation errors and preserve entered values where
+  appropriate. Leading/trailing password whitespace is preserved through login,
+  password changes, and vault storage. Generator output always includes lowercase
+  plus each selected character class.
+- Missing CSS/JavaScript assets were restored. Bootstrap is served locally,
+  external font/CDN dependencies were removed, and a local favicon was added.
+- Sensitive page responses carry no-store cache headers.
+
+Runtime and setup:
+- Runtime dependencies were updated and pinned, including Django 5.2.19,
+  django-two-factor-auth 1.18.1, and current cryptography/django-otp packages.
+- Production settings enable HTTPS redirects, secure cookies, HSTS, and explicit
+  hostname/origin configuration. Trusted proxy headers require explicit opt-in.
+- WhiteNoise serves collected static assets, including under Gunicorn.
+- Added a setup script that creates persistent secrets only for a new install;
+  existing .env contents and encryption keys were preserved.
+- Added .gitignore, .env.example, development requirements, and SETUP.txt.
+- Applied migrations to the local database and restricted .env/database file
+  permissions. No demo users or administrator passwords were created.
+- Local development server: http://127.0.0.1:8010/
+
+EVIDENCE
+results/tests.txt                Final backend test output
+results/ui-tests.txt             JavaScript DOM test output
+results/legacy-migration.txt     Legacy data migration proof
+results/check.txt                Django system checks
+results/migrations.txt           Missing migration check
+results/deploy.txt               Production deployment check
+results/static.txt               Production asset build
+results/http-smoke.txt           Final live HTTP checks
+results/dependency-audit.json    Runtime dependency audit
+
+REPRODUCTION
+See ../SETUP.txt for setup, mail, backups, production, and validation commands.
+The isolated runner uses synthetic users, generated test keys, an in-memory
+SQLite database, and in-memory email. No real emails were sent by validation.
+
+OPERATING LIMITS
+This establishes the passing behavior above, not a guarantee that no defects
+can exist. Browser visual verification was unavailable in this session; the
+browser connection exposed no usable local browser tab. DOM tests therefore
+cover JavaScript behavior, not browser layout, native clipboard permissions, or
+mobile rendering. Clipboard failure has a visible manual-copy fallback.
+
+SMTP credentials/delivery and a public HTTPS deployment were not exercised.
+Local development defaults to console email, where verification/reset links
+appear in server output. Configure SMTP to deliver real email. Development
+HTTP intentionally differs from production HTTPS. The initial api/ directory
+remains an unused scaffold; no new public API was added.
+
+Back up .env and the database together. The key-removal migration is deliberately
+irreversible; rollback requires a matching backup. Existing verification links
+from the old version should be reissued. The source archive text exports and
+old Word document outside the application were left as historical material.

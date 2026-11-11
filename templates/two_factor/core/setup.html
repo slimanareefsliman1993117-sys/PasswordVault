@@ -1,0 +1,7 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% block title %}Set up authenticator{% endblock %}
+{% block content %}<div class="card form-page mx-auto"><h1 class="h3">Set up your authenticator</h1>
+{% if wizard.steps.current == 'welcome' %}<p>Use an authenticator app to require a one-time code when you log in.</p>{% endif %}
+{% if wizard.steps.current == 'generator' %}<p>Scan this QR code in your authenticator app, then enter its six-digit code.</p><img src="{{ QR_URL }}" width="240" height="240" alt="Authenticator setup QR code"><details class="my-3"><summary>Enter a setup key manually</summary><code class="text-break">{{ secret_key }}</code></details>{% endif %}
+<form method="post">{% csrf_token %}{{ wizard.management_form }}{{ form.as_p }}<button class="btn btn-primary" type="submit">{% if wizard.steps.current == 'generator' %}Confirm authenticator{% else %}Continue{% endif %}</button> <a class="btn btn-secondary" href="{% url 'accounts:account_settings' %}">Cancel</a></form></div>{% endblock %}

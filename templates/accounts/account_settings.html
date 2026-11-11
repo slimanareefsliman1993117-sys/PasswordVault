@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% block title %}Account settings{% endblock %}
+{% block content %}
+<div class="settings-page mx-auto"><h1>Account settings</h1>
+<section class="card mb-4"><h2 class="h4">Profile</h2><p>{{ user_email }}</p>
+<form method="post">{% csrf_token %}<input type="hidden" name="update_profile" value="1">{{ profile_form.as_p }}<button class="btn btn-primary">Save profile</button></form></section>
+<section class="card mb-4"><h2 class="h4">Change password</h2><form method="post">{% csrf_token %}<input type="hidden" name="change_password" value="1">{{ password_form.as_p }}<button class="btn btn-primary">Change password</button></form></section>
+<section class="card mb-4"><h2 class="h4">Two-factor authentication</h2>
+<p>{% if has_2fa %}Enabled. Your authenticator is required at login.{% else %}Add an authenticator app to protect your account.{% endif %}</p>
+<form method="post">{% csrf_token %}<input type="hidden" name="toggle_2fa" value="1">
+{% if has_2fa %}<label for="disablePassword" class="form-label">Current password</label><input id="disablePassword" name="current_password" type="password" class="form-control mb-3" autocomplete="current-password" required><button class="btn btn-outline-danger">Disable 2FA</button>
+{% else %}<input type="hidden" name="is_2fa_enabled" value="on"><button class="btn btn-primary">Set up authenticator</button>{% endif %}</form></section>
+<section class="card mb-4"><h2 class="h4">Recovery codes</h2>
+{% if new_recovery_codes %}<p class="alert alert-warning">Save these codes now. They are shown once; each can be used once.</p><ul class="recovery-codes">{% for code in new_recovery_codes %}<li><code>{{ code }}</code></li>{% endfor %}</ul>{% endif %}
+<p>{{ recovery_code_count }} unused recovery code{{ recovery_code_count|pluralize }} available.</p>
+{% if has_2fa %}<p>Generating new codes invalidates all previous codes.</p><form method="post">{% csrf_token %}<input type="hidden" name="regenerate_codes" value="1"><label for="recoveryPassword" class="form-label">Current password</label><input id="recoveryPassword" name="current_password" type="password" class="form-control mb-3" autocomplete="current-password" required><button class="btn btn-outline-primary">Generate new recovery codes</button></form>{% else %}<p class="text-muted">Set up 2FA to create recovery codes.</p>{% endif %}
+</section>
+<section class="card border-danger"><h2 class="h4 text-danger">Delete account</h2><p>This permanently deletes your account and all saved passwords.</p><form method="post">{% csrf_token %}<input type="hidden" name="delete_account" value="1"><label for="deletePassword" class="form-label">Current password</label><input id="deletePassword" name="current_password" type="password" class="form-control mb-3" autocomplete="current-password" required><button class="btn btn-danger">Permanently delete account</button></form></section>
+</div>
+{% endblock %}

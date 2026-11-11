@@ -1,0 +1,3 @@
+{% extends 'base.html' %}
+{% block title %}{% if category %}Edit{% else %}Add{% endif %} category{% endblock %}
+{% block content %}<div class="card form-page mx-auto"><h1 class="h3">{% if category %}Edit{% else %}Add{% endif %} category</h1><form method="post">{% csrf_token %}{{ form.as_p }}<button class="btn btn-primary">Save category</button> <a class="btn btn-secondary" href="{% url 'vault:dashboard' %}">Cancel</a></form></div>{% endblock %}

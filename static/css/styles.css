@@ -6,6 +6,12 @@ body { background: #f3f6fa; color: #172535; font-family: system-ui, sans-serif; 
 .card { padding: 1.5rem; border-radius: .8rem; border-color: #dbe3ec; box-shadow: 0 3px 14px #19314908; }
 h1 { font-size: clamp(1.7rem, 3vw, 2.2rem); font-weight: 700; }
 .form-page { max-width: 38rem; }
+.demo-credentials { background: #edf5fc; border: 1px solid #cddfeb; border-radius: .65rem; margin: .75rem 0 1.25rem; padding: 1rem; }
+.demo-credentials p { margin: 0 0 .75rem; color: #3b536a; }
+.demo-credentials dl { display: flex; flex-wrap: wrap; gap: .75rem 1.25rem; margin: 0; }
+.demo-credentials dt { font-size: .85rem; }
+.demo-credentials dd { margin: .2rem 0 0; overflow-wrap: anywhere; }
+.demo-credentials code { color: #173f63; user-select: all; }
 .settings-page { max-width: 46rem; }
 input:not([type=checkbox]):not([type=hidden]):not([type=radio]), select { border: 1px solid #aab9c8; border-radius: .35rem; padding: .55rem .7rem; max-width: 100%; }
 form p label { display: block; font-weight: 500; margin-bottom: .3rem; }

@@ -34,7 +34,7 @@
     document.getElementById('categoryFilter').addEventListener('change', filter);
     let pendingDelete = null;
     const dialog = document.getElementById('deleteDialog');
-    dialog.addEventListener('close', async () => {
+    dialog?.addEventListener('close', async () => {
       if (dialog.returnValue !== 'confirm' || !pendingDelete) return;
       const button = pendingDelete;
       button.disabled = true;
@@ -45,7 +45,7 @@
     dashboard.addEventListener('click', async event => {
       const button = event.target.closest('button');
       if (!button) return;
-      if (button.dataset.deleteUrl) {
+      if (dialog && button.dataset.deleteUrl) {
         pendingDelete = button;
         document.getElementById('deleteMessage').textContent = button.dataset.deleteKind === 'category'
           ? 'This deletes the category and every password in it. This cannot be undone.'

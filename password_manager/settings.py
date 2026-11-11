@@ -55,6 +55,7 @@ DATABASES = {'default': {'ENGINE': 'django.db.backends.sqlite3',
                          'NAME': BASE_DIR / 'db.sqlite3', 'OPTIONS': {'timeout': 20}}}
 AUTH_USER_MODEL = 'accounts.User'
 AUTHENTICATION_BACKENDS = ['accounts.backends.VerifiedEmailBackend']
+PUBLIC_DEMO_PASSWORD = config('PUBLIC_DEMO_PASSWORD', default='')
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
     {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator', 'OPTIONS': {'min_length': 12}},

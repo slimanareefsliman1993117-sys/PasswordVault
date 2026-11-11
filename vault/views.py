@@ -1,8 +1,9 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
-from django.http import JsonResponse
+from django.http import Http404, JsonResponse
 from .models import PasswordEntry, Category
 from .forms import PasswordEntryForm, CategoryForm
+from .demo import DEMO_CATEGORIES, DEMO_ENTRIES
 from .utils import generate_password, check_password_strength, encrypt_password, decrypt_password
 import logging
 
@@ -11,6 +12,10 @@ logger = logging.getLogger(__name__)
 #========================================================================================
 @login_required
 def dashboard(request):
+    if request.is_public_demo:
+        return render(request, 'vault/dashboard.html', {
+            'entries': DEMO_ENTRIES.values(), 'categories': DEMO_CATEGORIES,
+        })
     logger.info(f"User {request.user.email} accessed vault dashboard")
     entries = PasswordEntry.objects.filter(user=request.user)
     categories = Category.objects.filter(user=request.user)
@@ -162,5 +167,10 @@ def check_strength(request):
 def reveal_password(request, pk):
     if request.method != 'POST':
         return JsonResponse({'success': False, 'error': 'POST required'}, status=405)
+    if request.is_public_demo:
+        entry = DEMO_ENTRIES.get(pk)
+        if entry is None:
+            raise Http404
+        return JsonResponse({'success': True, 'password': entry['password']})
     entry = get_object_or_404(PasswordEntry, pk=pk, user=request.user)
     return JsonResponse({'success': True, 'password': decrypt_password(entry.encrypted_password)})

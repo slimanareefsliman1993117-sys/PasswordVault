@@ -1,6 +1,7 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm, PasswordChangeForm
 from .models import User
+from .demo import DEMO_EMAIL
 
 class CustomUserCreationForm(UserCreationForm):
     email = forms.EmailField(max_length=254, required=True, help_text="Enter a valid email address.")
@@ -13,6 +14,8 @@ class CustomUserCreationForm(UserCreationForm):
 
     def clean_email(self):
         email = self.cleaned_data['email'].strip().lower()
+        if email == DEMO_EMAIL:
+            raise forms.ValidationError('This address is reserved for the public demo.')
         if User.objects.filter(email__iexact=email).exists():
             raise forms.ValidationError('An account with this email already exists.')
         return email

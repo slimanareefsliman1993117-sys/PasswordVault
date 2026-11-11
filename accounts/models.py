@@ -4,6 +4,7 @@ from django.db.models.functions import Lower
 from cryptography.fernet import Fernet
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
+from .demo import DEMO_EMAIL, DEMO_USERNAME
 import logging
 logger = logging.getLogger(__name__)
 def get_fernet():
@@ -56,6 +57,10 @@ class User(AbstractUser):
 
     def __str__(self):
         return self.email
+
+    @property
+    def is_public_demo(self):
+        return self.email.casefold() == DEMO_EMAIL and self.username == DEMO_USERNAME
 # ==============================================================================
 class RecoveryCode(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)

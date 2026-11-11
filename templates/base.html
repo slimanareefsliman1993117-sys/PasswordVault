@@ -23,8 +23,10 @@
                     <ul class="navbar-nav ms-auto">
                         {% if user.is_authenticated %}
                             <li class="nav-item"><a class="nav-link" href="{% url 'vault:dashboard' %}">Dashboard</a></li>
-                            <li class="nav-item"><a class="nav-link" href="{% url 'two_factor:profile' %}">Security</a></li>
-                            <li class="nav-item"><a class="nav-link" href="{% url 'accounts:account_settings' %}">Settings</a></li>
+                            {% if not request.is_public_demo %}
+                                <li class="nav-item"><a class="nav-link" href="{% url 'two_factor:profile' %}">Security</a></li>
+                                <li class="nav-item"><a class="nav-link" href="{% url 'accounts:account_settings' %}">Settings</a></li>
+                            {% endif %}
                             <li class="nav-item"><form method="post" action="{% url 'accounts:logout' %}">{% csrf_token %}<button class="nav-link btn btn-link" type="submit">Logout</button></form></li>
                         {% else %}
                             <li class="nav-item"><a class="nav-link" href="{% url 'accounts:login' %}">Login</a></li>

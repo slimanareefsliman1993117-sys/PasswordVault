@@ -28,6 +28,7 @@ from two_factor.views import SetupView
 from .forms import CustomUserCreationForm, LoginForm, ProfileUpdateForm, CustomPasswordChangeForm
 from .models import RecoveryCode, User
 from .tokens import email_verification_token
+from .demo import DEMO_EMAIL, get_demo_user
 
 
 def send_verification(request, user):
@@ -76,13 +77,18 @@ def login_view(request):
     if request.method == 'POST' and form.is_valid():
         user = authenticate(request, email=form.cleaned_data['email'], password=form.cleaned_data['password'])
         if user:
-            if TOTPDevice.objects.filter(user=user, confirmed=True).exists():
+            if not user.is_public_demo and TOTPDevice.objects.filter(user=user, confirmed=True).exists():
                 begin_challenge(request, user)
                 return redirect('accounts:two_factor_verify')
             login(request, user)
             return redirect('vault:dashboard')
         error = 'Invalid credentials, or your email has not been verified.'
-    return render(request, 'accounts/login.html', {'form': form, 'error': error})
+    demo_credentials = None
+    if settings.PUBLIC_DEMO_PASSWORD:
+        demo = get_demo_user()
+        if demo and not demo.has_usable_password():
+            demo_credentials = {'email': DEMO_EMAIL, 'password': settings.PUBLIC_DEMO_PASSWORD}
+    return render(request, 'accounts/login.html', {'form': form, 'error': error, 'demo_credentials': demo_credentials})
 
 
 @ratelimit(key='ip', rate='10/m', method='POST', block=True)
